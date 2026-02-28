@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signage Simulation - MORPHO</title>
+    <style>
+        /* --- CSS Reset & Variables --- */
+        :root {
+            --bg-color: #f2f2f2;
+            --panel-bg: #eaeaea;
+            --accent-color: #6e6e73;
+            --text-main: #333333;
+            --text-sub: #6e6e73;
+            --border-color: #d6d6d8;
+            --shadow-soft: 0 4px 12px rgba(0,0,0,0.05);
+            --radius-main: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* --- Tool Navigation --- */
+        .tool-nav {
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 0 4px;
+        }
+        .tool-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        .tool-nav-back {
+            font-size: 13px;
+            color: #888;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+        .tool-nav-back:hover { color: #555; }
+        .tool-nav-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--accent-color);
+            letter-spacing: -0.3px;
+        }
+        .tool-nav-switch {
+            font-size: 12px;
+            color: #888;
+            text-decoration: none;
+            padding: 6px 14px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+        .tool-nav-switch:hover {
+            color: #555;
+            border-color: #bbb;
+            background: #fff;
+        }
+
+        /* --- Layout --- */
+        #app-container {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 24px;
+            width: 100%;
+            max-width: 1400px;
+            height: calc(100vh - 100px);
+            min-height: 750px;
+        }
+
+        @media (max-width: 1000px) {
+            #app-container { grid-template-columns: 1fr; height: auto; }
+        }
+
+        /* --- Sidebar (Controls) --- */
+        #sidebar {
+            background-color: var(--panel-bg);
+            border-radius: var(--radius-main);
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            height: 100%;
+        }
+
+        .control-block {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-sub);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 6px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        /* Input Rows */
+        .input-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .input-row label { flex: 1; }
+
+        input[type="range"] {
+            flex: 2;
+            -webkit-appearance: none;
+            height: 6px;
+            background: #ccc;
+            border-radius: 3px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+
+        input[type="number"] {
+            width: 60px;
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: white;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        input[type="number"]:focus { outline: none; border-color: var(--accent-color); }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: white;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: white;
+            font-size: 13px;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        /* Mode Switch Buttons */
+        .mode-switch {
+            display: flex;
+            background: #dcdcdc;
+            padding: 4px;
+            border-radius: 8px;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-sub);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .mode-btn span.sub { display: block; font-size: 10px; font-weight: 400; margin-top: 2px; opacity: 0.8; }
+        .mode-btn.active {
+            background: white;
+            color: var(--text-main);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Material / Color Controls */
+        .radio-group {
+            display: flex;
+            gap: 16px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        input[type="radio"] { accent-color: var(--accent-color); }
+
+        .brightness-panel {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+            display: none; /* toggled by JS */
+        }
+        .color-preview-bar {
+            height: 6px;
+            width: 100%;
+            border-radius: 3px;
+            margin-top: 8px;
+            border: 1px solid #ddd;
+            background: #808080;
+        }
+
+        /* Text Settings Area */
+        .padding-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .padding-grid div { display: flex; align-items: center; gap: 4px; }
+        .padding-grid label { font-size: 11px; color: var(--text-sub); width: 30px;}
+
+        .scroll-area {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+        }
+        .char-slider-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        /* --- Main Content (Views) --- */
+        #main-view {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: 100%;
+        }
+
+        .view-card {
+            background: white;
+            border-radius: var(--radius-main);
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sim-section { flex: 3; min-height: 300px; }
+        .analysis-section { 
+            flex: 2; 
+            display: flex; 
+            gap: 16px; 
+            min-height: 200px;
+        }
+        .sub-view { 
+            flex: 1; 
+            background: white;
+            border-radius: var(--radius-main);
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .view-label {
+            position: absolute;
+            top: 12px; left: 16px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-color);
+            background: rgba(255,255,255,0.9);
+            padding: 4px 8px;
+            border-radius: 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        canvas { width: 100%; height: 100%; display: block; }
+
+        /* View Mode Switch */
+        .view-mode-switch {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            display: flex;
+            background: rgba(220,220,220,0.95);
+            padding: 3px;
+            border-radius: 6px;
+            z-index: 10;
+        }
+        .view-mode-btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: none;
+            background: transparent;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .view-mode-btn.active {
+            background: white;
+            color: var(--text-main);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Hidden color input */
+        .hidden-color-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <nav class="tool-nav">
+        <div class="tool-nav-left">
+            <a href="tool.html" class="tool-nav-back">← Tools</a>
+            <span class="tool-nav-title">Signage Simulation</span>
+        </div>
+        <a href="parameter-optimization.html" class="tool-nav-switch">Parameter Optimization →</a>
+    </nav>
+
+    <div id="app-container">
+        
+        <aside id="sidebar">
+            
+            <div class="control-block">
+                <span class="section-label">Display Mode (厚み変調プリセット)</span>
+                <div class="mode-switch">
+                    <button class="mode-btn active" id="btnNegative" onclick="setMode('negative')">
+                        Negative
+                        <span class="sub">透け = 文字</span>
+                    </button>
+                    <button class="mode-btn" id="btnPositive" onclick="setMode('positive')">
+                        Positive
+                        <span class="sub">遮蔽 = 文字</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="control-block">
+                <span class="section-label">Material (素材色)</span>
+                <div class="radio-group">
+                    <label class="radio-label"><input type="radio" name="mat_type" value="transparent" checked> 透明</label>
+                    <label class="radio-label"><input type="radio" name="mat_type" value="opaque"> 不透明</label>
+                </div>
+                
+                <div class="brightness-panel" id="group-brightness">
+                    <div class="input-row" style="margin-bottom:8px;">
+                        <span>明るさ</span>
+                        <span id="val-brightness">128</span>
+                    </div>
+                    <input type="range" id="input-brightness" min="0" max="255" value="128" style="width:100%">
+                    <div class="color-preview-bar" id="preview-color-bar"></div>
+                    <div style="display:flex; justify-content:space-between; font-size:10px; color:#999; margin-top:4px;">
+                        <span>Black (0)</span><span>White (255)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-block">
+                <span class="section-label">Observer (視点位置)</span>
+                <div class="input-row">
+                    <label>距離 L (mm)</label>
+                    <input type="range" id="paramL" min="400" max="10000" step="100" value="2000">
+                    <input type="number" id="numL" value="2000" step="100">
+                </div>
+                <div class="input-row">
+                    <label>横ズレ X (mm)</label>
+                    <input type="range" id="paramObsX" min="-5000" max="5000" step="10" value="0">
+                    <input type="number" id="numObsX" value="0" step="10">
+                </div>
+                <div class="input-row">
+                    <label>高さ H (mm)</label>
+                    <input type="range" id="paramObsHeight" min="0" max="2500" step="10" value="1600">
+                    <input type="number" id="numObsHeight" value="1600" step="10">
+                </div>
+            </div>
+
+            <div class="control-block">
+                <span class="section-label">Design Specs (文字・レイアウト)</span>
+                <div class="input-row">
+                    <input type="text" id="inputText" value="sample">
+                </div>
+                <div class="input-row">
+                    <label>文字サイズ (mm)</label>
+                    <input type="number" id="inputFontSize" value="300" step="10" style="width:80px;">
+                </div>
+                
+                <div style="margin-top:4px;">
+                    <label style="font-size:11px; color:var(--text-sub); display:block; margin-bottom:4px;">余白 (Padding)</label>
+                    <div class="padding-grid">
+                        <div><label>Top</label><input type="number" id="padTop" value="100"></div>
+                        <div><label>Btm</label><input type="number" id="padBtm" value="100"></div>
+                        <div><label>Left</label><input type="number" id="padLeft" value="150"></div>
+                        <div><label>Rgt</label><input type="number" id="padRight" value="150"></div>
+                    </div>
+                </div>
+                <div style="text-align:right; font-size:11px; color:var(--text-sub); margin-top:4px;">
+                    Board Size: <span id="dispSize" style="font-weight:700; color:var(--text-main)">-</span>
+                </div>
+            </div>
+
+            <div class="control-block">
+                <span class="section-label">Parameters (板厚・穴径)</span>
+                
+                <div class="input-row">
+                    <label>穴径 D (mm)</label>
+                    <input type="number" id="paramD" value="2" min="0.5" max="10" step="0.5" style="width:80px;">
+                </div>
+
+                <div class="input-row" style="margin-top:8px;">
+                    <label>ベースの厚み T_base</label>
+                    <input type="range" id="paramBaseT" min="1" max="50" step="0.5" value="20">
+                    <input type="number" id="numBaseT" value="20" step="0.5">
+                </div>
+
+                <div style="margin-top:8px;">
+                    <label style="font-size:12px; font-weight:600; color:var(--text-main); margin-bottom:6px; display:block;">
+                        文字ごとの厚み T_char
+                    </label>
+                    <div class="scroll-area" id="textSlidersContainer">
+                        </div>
+                </div>
+            </div>
+
+        </aside>
+
+        <main id="main-view">
+            <div class="view-card sim-section">
+                <div class="view-label">Simulation View</div>
+                <div class="view-mode-switch">
+                    <button class="view-mode-btn active" id="btnViewField" onclick="setViewMode('field')">Field</button>
+                    <button class="view-mode-btn" id="btnViewRange" onclick="setViewMode('range')">Visible Range</button>
+                </div>
+                <canvas id="canvasSim"></canvas>
+                <input type="color" id="hiddenColorPicker" class="hidden-color-input">
+            </div>
+            
+            <div class="analysis-section">
+                <div class="sub-view">
+                    <div class="view-label">Top View</div>
+                    <canvas id="canvasTop"></canvas>
+                </div>
+                <div class="sub-view">
+                    <div class="view-label">Side View</div>
+                    <canvas id="canvasSide"></canvas>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+<script>
+    // --- 1. MATHEMATICAL MODEL (Chapter 6) ---
+    const K0 = 0.961;
+    const TABLE_K_DT = [{x:0.25,y:1.275},{x:0.33,y:1.187},{x:0.37,y:1.147},{x:0.40,y:1.121},{x:0.45,y:1.082},{x:0.50,y:1.048},{x:0.60,y:1.000},{x:0.66,y:0.972},{x:0.83,y:0.906},{x:0.90,y:0.885},{x:1.00,y:0.857},{x:1.20,y:0.811},{x:1.25,y:0.801},{x:1.50,y:0.757}];
+    const TABLE_K_DIST = [{x:0.5,y:1.193},{x:1.0,y:1.091},{x:2.0,y:1.000},{x:4.0,y:0.917},{x:6.0,y:0.857}];
+    
+    // Transparent Coefficients
+    const COEFF_TRANS_TEXT = 1.000;
+    const COEFF_TRANS_BG = 1.132;
+    // Opaque Coefficients (Interpolation Targets)
+    const OPAQUE_DATA = { black: {text:0.947, bg:1.341}, white: {text:0.713, bg:1.001} };
+
+    // Default colors for visible range circles
+    const DEFAULT_COLORS = [
+        '#e63946', '#2a9d8f', '#f4a261', '#264653', '#9b5de5',
+        '#00bbf9', '#00f5d4', '#fee440', '#f15bb5', '#3a86ff'
+    ];
+
+    // Basic Interpolation
+    function interpolate(val, table) {
+        table.sort((a,b)=>a.x-b.x);
+        if(val<=table[0].x) { const p1=table[0],p2=table[1]; return p1.y+(val-p1.x)*(p2.y-p1.y)/(p2.x-p1.x); }
+        if(val>=table[table.length-1].x) { const p1=table[table.length-2],p2=table[table.length-1]; return p2.y+(val-p2.x)*(p2.y-p1.y)/(p2.x-p1.x); }
+        for(let i=0; i<table.length-1; i++) {
+            if(val>=table[i].x && val<table[i+1].x) {
+                const p1=table[i], p2=table[i+1];
+                return p1.y+(val-p1.x)*(p2.y-p1.y)/(p2.x-p1.x);
+            }
+        }
+        return table[0].y;
+    }
+
+    // Material Coefficient Logic
+    function getColContCoefficient(matType, brightness, task) {
+        if (matType === 'transparent') {
+            return task === 'text' ? COEFF_TRANS_TEXT : COEFF_TRANS_BG;
+        } else {
+            // Opaque Linear Interpolation (0-255)
+            const r = brightness / 255.0;
+            const start = OPAQUE_DATA.black[task==='text'?'text':'bg'];
+            const end = OPAQUE_DATA.white[task==='text'?'text':'bg'];
+            return start + (end - start) * r;
+        }
+    }
+
+    // Core Prediction
+    function calculateAlpha(T, D, L_meter, taskType, matType, brightness) {
+        const geomDeg = (2 * Math.atan(D / T)) * (180 / Math.PI);
+        const k_dt = interpolate(D / T, TABLE_K_DT);
+        const k_dist = interpolate(L_meter, TABLE_K_DIST);
+        const k_col = getColContCoefficient(matType, brightness, taskType);
+        
+        return geomDeg * K0 * k_dt * k_dist * k_col;
+    }
+
+    // Radius Calculation
+    function calculateRMax(alphaDeg, L_mm, D_mm) {
+        const halfRad = (alphaDeg * Math.PI / 180) / 2;
+        return (D_mm / 2) + L_mm * Math.tan(halfRad);
+    }
+
+
+    // --- 2. APP LOGIC ---
+
+    const STAND_H = 800; 
+    const MOUNT_Y = 800; 
+
+    let FONT_SIZE_MM = 300;
+    let BOARD_W = 0;
+    let BOARD_H = 0;
+    let CENTER_H = 0;
+    let currentMode = 'negative';
+    let currentViewMode = 'field'; // 'field' or 'range'
+
+    // Zoom levels for each view
+    let zoomSim = 1;
+    let zoomTop = 1;
+    let zoomSide = 1;
+    let panSim = { x: 0, y: 0 };
+    let panTop = { x: 0, y: 0 };
+    let panSide = { x: 0, y: 0 };
+
+    let generatedLetters = [];
+    let generatedBase = {}; 
+    let letterColors = []; // Color for each letter's visible range
+
+    // Canvas
+    const cvSim = document.getElementById('canvasSim');
+    const ctxSim = cvSim.getContext('2d');
+    const cvTop = document.getElementById('canvasTop');
+    const ctxTop = cvTop.getContext('2d');
+    const cvSide = document.getElementById('canvasSide');
+    const ctxSide = cvSide.getContext('2d');
+
+    // UI Elements
+    const els = {
+        input: document.getElementById('inputText'),
+        fontSize: document.getElementById('inputFontSize'),
+        padTop: document.getElementById('padTop'),
+        padBtm: document.getElementById('padBtm'),
+        padLeft: document.getElementById('padLeft'),
+        padRight: document.getElementById('padRight'),
+        dispSize: document.getElementById('dispSize'),
+        textContainer: document.getElementById('textSlidersContainer'),
+        baseT: document.getElementById('paramBaseT'),
+        numBaseT: document.getElementById('numBaseT'),
+        L: document.getElementById('paramL'),
+        D: document.getElementById('paramD'),
+        ObsX: document.getElementById('paramObsX'),
+        ObsH: document.getElementById('paramObsHeight'),
+        numL: document.getElementById('numL'),
+        numObsX: document.getElementById('numObsX'),
+        numObsH: document.getElementById('numObsHeight'),
+        btnNeg: document.getElementById('btnNegative'),
+        btnPos: document.getElementById('btnPositive'),
+        // Color Controls
+        matRadios: document.getElementsByName('mat_type'),
+        brightPanel: document.getElementById('group-brightness'),
+        brightInput: document.getElementById('input-brightness'),
+        brightVal: document.getElementById('val-brightness'),
+        brightBar: document.getElementById('preview-color-bar'),
+        // View Mode
+        btnViewField: document.getElementById('btnViewField'),
+        btnViewRange: document.getElementById('btnViewRange'),
+        colorPicker: document.getElementById('hiddenColorPicker')
+    };
+
+    // UI Bindings
+    function bindInput(rangeId, numId) {
+        const range = document.getElementById(rangeId);
+        const num = document.getElementById(numId);
+        range.addEventListener('input', () => { num.value = range.value; update(); });
+        num.addEventListener('input', () => { range.value = num.value; update(); });
+    }
+    bindInput('paramObsX', 'numObsX');
+    bindInput('paramObsHeight', 'numObsHeight');
+    bindInput('paramL', 'numL');
+    bindInput('paramBaseT', 'numBaseT');
+    
+    document.getElementById('paramD').addEventListener('input', update);
+    [els.input, els.fontSize, els.padTop, els.padBtm, els.padLeft, els.padRight].forEach(el => {
+        el.addEventListener('input', regenerateStructure);
+    });
+
+    // Color UI Logic
+    els.matRadios.forEach(r => r.addEventListener('change', (e) => {
+        els.brightPanel.style.display = (e.target.value === 'opaque') ? 'block' : 'none';
+        update();
+    }));
+    els.brightInput.addEventListener('input', (e) => {
+        const v = e.target.value;
+        els.brightVal.textContent = v;
+        els.brightBar.style.background = `rgb(${v},${v},${v})`;
+        update();
+    });
+
+    let textInputs = [];
+
+    // View Mode Setting
+    window.setViewMode = function(mode) {
+        currentViewMode = mode;
+        if (mode === 'field') {
+            els.btnViewField.className = 'view-mode-btn active';
+            els.btnViewRange.className = 'view-mode-btn';
+        } else {
+            els.btnViewField.className = 'view-mode-btn';
+            els.btnViewRange.className = 'view-mode-btn active';
+        }
+        update();
+    }
+
+    // Mode Setting
+    window.setMode = function(mode) {
+        currentMode = mode;
+        if(mode === 'negative') {
+            els.btnNeg.className = 'mode-btn active';
+            els.btnPos.className = 'mode-btn';
+            updateAllSliders(5, 20); 
+        } else {
+            els.btnNeg.className = 'mode-btn';
+            els.btnPos.className = 'mode-btn active';
+            updateAllSliders(20, 5); 
+        }
+    }
+
+    function updateAllSliders(textVal, baseVal) {
+        els.baseT.value = baseVal;
+        els.numBaseT.value = baseVal;
+        textInputs.forEach(input => {
+            input.value = textVal;
+            input.nextElementSibling.value = textVal; 
+        });
+        update();
+    }
+
+    // Structure Generation
+    function regenerateStructure() {
+        const text = els.input.value || " ";
+        FONT_SIZE_MM = parseFloat(els.fontSize.value) || 300;
+        const padT = parseFloat(els.padTop.value) || 0;
+        const padB = parseFloat(els.padBtm.value) || 0;
+        const padL = parseFloat(els.padLeft.value) || 0;
+        const padR = parseFloat(els.padRight.value) || 0;
+
+        const tempCtx = document.createElement('canvas').getContext('2d');
+        tempCtx.font = `bold ${FONT_SIZE_MM}px Arial, sans-serif`;
+
+        generatedLetters = [];
+        letterColors = [];
+        let currentX = padL;
+
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const w = tempCtx.measureText(char).width;
+            generatedLetters.push({
+                char: char,
+                x: currentX,
+                w: w,
+                y_baseline: padT + FONT_SIZE_MM * 0.8,
+                size: FONT_SIZE_MM,
+                defaultT: currentMode === 'negative' ? 5 : 20 
+            });
+            letterColors.push(DEFAULT_COLORS[i % DEFAULT_COLORS.length]);
+            currentX += w;
+        }
+
+        const totalTextWidth = currentX - padL;
+        BOARD_W = padL + totalTextWidth + padR;
+        BOARD_H = padT + FONT_SIZE_MM + padB;
+        CENTER_H = MOUNT_Y + BOARD_H / 2;
+        els.dispSize.innerText = `W ${Math.round(BOARD_W)} x H ${Math.round(BOARD_H)} mm`;
+
+        generatedBase = { x: 0, y: 0, w: BOARD_W, h: BOARD_H };
+
+        rebuildTextSliders();
+        update();
+    }
+
+    function rebuildTextSliders() {
+        const container = els.textContainer;
+        container.innerHTML = ''; 
+        textInputs = [];
+
+        generatedLetters.forEach((l, index) => {
+            const row = document.createElement('div');
+            row.className = 'char-slider-row';
+
+            const label = document.createElement('label');
+            label.textContent = `"${l.char}"`;
+            label.style.width = '20px';
+            label.style.fontWeight = 'bold';
+
+            const range = document.createElement('input');
+            range.type = 'range';
+            range.min = '1'; range.max = '50'; range.step = '0.5';
+            range.value = l.defaultT;
+            range.style.flex = '1';
+
+            const num = document.createElement('input');
+            num.type = 'number';
+            num.value = l.defaultT;
+            num.style.width = '50px';
+
+            range.addEventListener('input', () => { num.value = range.value; update(); });
+            num.addEventListener('input', () => { range.value = num.value; update(); });
+
+            textInputs.push(range);
+            row.appendChild(label);
+            row.appendChild(range);
+            row.appendChild(num);
+            container.appendChild(row);
+        });
+    }
+
+    let selectedLetterIndex = -1;
+
+    function openColorPicker(index) {
+        selectedLetterIndex = index;
+        els.colorPicker.value = letterColors[index];
+        els.colorPicker.click();
+    }
+
+    els.colorPicker.addEventListener('change', (e) => {
+        if (selectedLetterIndex >= 0 && selectedLetterIndex < letterColors.length) {
+            letterColors[selectedLetterIndex] = e.target.value;
+            update();
+        }
+        selectedLetterIndex = -1;
+    });
+
+    // Drag state (defined early for mousemove handler)
+    let isDragging = false;
+    let dragTarget = null;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragStartPan = { x: 0, y: 0 };
+
+    // Store last calculated data for click detection
+    let lastDrawData = {
+        scale: 1,
+        ox: 0,
+        oy: 0,
+        letters: []
+    };
+
+    // Canvas click handler for visible range circles
+    cvSim.addEventListener('click', (e) => {
+        if (currentViewMode !== 'range') return;
+
+        const rect = cvSim.getBoundingClientRect();
+        const clickX = (e.clientX - rect.left) * (cvSim.width / rect.width);
+        const clickY = (e.clientY - rect.top) * (cvSim.height / rect.height);
+
+        // Check each letter's circle (reverse order for top layer first)
+        for (let i = lastDrawData.letters.length - 1; i >= 0; i--) {
+            const l = lastDrawData.letters[i];
+            const dist = Math.sqrt((clickX - l.cx) ** 2 + (clickY - l.cy) ** 2);
+            
+            // Check if click is near the circle edge (within 20px tolerance)
+            if (Math.abs(dist - l.rPx) < 20) {
+                openColorPicker(i);
+                return;
+            }
+        }
+    });
+
+    // Change cursor on hover near circles
+    cvSim.addEventListener('mousemove', (e) => {
+        if (isDragging) return; // Don't change cursor while dragging
+        
+        if (currentViewMode !== 'range') {
+            cvSim.style.cursor = 'grab';
+            return;
+        }
+
+        const rect = cvSim.getBoundingClientRect();
+        const mouseX = (e.clientX - rect.left) * (cvSim.width / rect.width);
+        const mouseY = (e.clientY - rect.top) * (cvSim.height / rect.height);
+
+        let nearCircle = false;
+        for (let i = 0; i < lastDrawData.letters.length; i++) {
+            const l = lastDrawData.letters[i];
+            const dist = Math.sqrt((mouseX - l.cx) ** 2 + (mouseY - l.cy) ** 2);
+            if (Math.abs(dist - l.rPx) < 20) {
+                nearCircle = true;
+                break;
+            }
+        }
+        cvSim.style.cursor = nearCircle ? 'pointer' : 'grab';
+    });
+
+    // Zoom functionality for each canvas
+    function handleZoom(e, canvasType) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        const rect = e.target.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        if (canvasType === 'sim') {
+            const oldZoom = zoomSim;
+            zoomSim = Math.max(0.5, Math.min(5, zoomSim * delta));
+            // Adjust pan to zoom towards mouse position
+            const zoomRatio = zoomSim / oldZoom;
+            panSim.x = mouseX - (mouseX - panSim.x) * zoomRatio;
+            panSim.y = mouseY - (mouseY - panSim.y) * zoomRatio;
+        } else if (canvasType === 'top') {
+            const oldZoom = zoomTop;
+            zoomTop = Math.max(0.5, Math.min(5, zoomTop * delta));
+            const zoomRatio = zoomTop / oldZoom;
+            panTop.x = mouseX - (mouseX - panTop.x) * zoomRatio;
+            panTop.y = mouseY - (mouseY - panTop.y) * zoomRatio;
+        } else if (canvasType === 'side') {
+            const oldZoom = zoomSide;
+            zoomSide = Math.max(0.5, Math.min(5, zoomSide * delta));
+            const zoomRatio = zoomSide / oldZoom;
+            panSide.x = mouseX - (mouseX - panSide.x) * zoomRatio;
+            panSide.y = mouseY - (mouseY - panSide.y) * zoomRatio;
+        }
+        update();
+    }
+
+    cvSim.addEventListener('wheel', (e) => handleZoom(e, 'sim'), { passive: false });
+    cvTop.addEventListener('wheel', (e) => handleZoom(e, 'top'), { passive: false });
+    cvSide.addEventListener('wheel', (e) => handleZoom(e, 'side'), { passive: false });
+
+    // Double-click to reset zoom
+    cvSim.addEventListener('dblclick', () => { zoomSim = 1; panSim = { x: 0, y: 0 }; update(); });
+    cvTop.addEventListener('dblclick', () => { zoomTop = 1; panTop = { x: 0, y: 0 }; update(); });
+    cvSide.addEventListener('dblclick', () => { zoomSide = 1; panSide = { x: 0, y: 0 }; update(); });
+
+    // Drag to pan functionality
+    function handleDragStart(e, canvasType) {
+        // Only start drag if not clicking on a circle in range mode
+        if (canvasType === 'sim' && currentViewMode === 'range') {
+            const rect = cvSim.getBoundingClientRect();
+            const mouseX = (e.clientX - rect.left) * (cvSim.width / rect.width);
+            const mouseY = (e.clientY - rect.top) * (cvSim.height / rect.height);
+            
+            for (let i = 0; i < lastDrawData.letters.length; i++) {
+                const l = lastDrawData.letters[i];
+                const dist = Math.sqrt((mouseX - l.cx) ** 2 + (mouseY - l.cy) ** 2);
+                if (Math.abs(dist - l.rPx) < 20) {
+                    return; // Don't start drag if clicking on circle
+                }
+            }
+        }
+        
+        isDragging = true;
+        dragTarget = canvasType;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        
+        if (canvasType === 'sim') {
+            dragStartPan = { ...panSim };
+            cvSim.style.cursor = 'grabbing';
+        } else if (canvasType === 'top') {
+            dragStartPan = { ...panTop };
+            cvTop.style.cursor = 'grabbing';
+        } else if (canvasType === 'side') {
+            dragStartPan = { ...panSide };
+            cvSide.style.cursor = 'grabbing';
+        }
+    }
+
+    function handleDragMove(e) {
+        if (!isDragging) return;
+        
+        const dx = e.clientX - dragStartX;
+        const dy = e.clientY - dragStartY;
+        
+        if (dragTarget === 'sim') {
+            panSim.x = dragStartPan.x + dx;
+            panSim.y = dragStartPan.y + dy;
+        } else if (dragTarget === 'top') {
+            panTop.x = dragStartPan.x + dx;
+            panTop.y = dragStartPan.y + dy;
+        } else if (dragTarget === 'side') {
+            panSide.x = dragStartPan.x + dx;
+            panSide.y = dragStartPan.y + dy;
+        }
+        
+        update();
+    }
+
+    function handleDragEnd() {
+        if (isDragging) {
+            isDragging = false;
+            if (dragTarget === 'sim') {
+                cvSim.style.cursor = currentViewMode === 'range' ? 'default' : 'grab';
+            } else if (dragTarget === 'top') {
+                cvTop.style.cursor = 'grab';
+            } else if (dragTarget === 'side') {
+                cvSide.style.cursor = 'grab';
+            }
+            dragTarget = null;
+        }
+    }
+
+    cvSim.addEventListener('mousedown', (e) => handleDragStart(e, 'sim'));
+    cvTop.addEventListener('mousedown', (e) => handleDragStart(e, 'top'));
+    cvSide.addEventListener('mousedown', (e) => handleDragStart(e, 'side'));
+
+    document.addEventListener('mousemove', handleDragMove);
+    document.addEventListener('mouseup', handleDragEnd);
+
+    // Set initial cursors
+    cvSim.style.cursor = 'grab';
+    cvTop.style.cursor = 'grab';
+    cvSide.style.cursor = 'grab';
+
+    // --- DRAWING & SIMULATION ---
+
+    function update() {
+        const L = parseFloat(els.L.value);
+        const D = parseFloat(els.D.value);
+        const obsX = parseFloat(els.ObsX.value);
+        const obsH = parseFloat(els.ObsH.value);
+        const baseT = parseFloat(els.baseT.value);
+        const T_chars = textInputs.map(input => parseFloat(input.value));
+        
+        // Color Settings
+        const matType = document.querySelector('input[name="mat_type"]:checked').value;
+        const brightness = parseInt(els.brightInput.value);
+
+        // 1. Calculate Alpha & R_max
+        const alphaBase = calculateAlpha(baseT, D, L/1000, 'background', matType, brightness);
+        const rMaxBase = calculateRMax(alphaBase, L, D);
+
+        const lettersData = generatedLetters.map((l, i) => {
+            const tVal = T_chars[i];
+            const alpha = calculateAlpha(tVal, D, L/1000, 'text', matType, brightness);
+            const rMax = calculateRMax(alpha, L, D);
+            return { ...l, alpha, rMax, tVal, color: letterColors[i] };
+        });
+
+        // Pass Color Settings to Draw
+        const baseColorVal = (matType==='opaque') ? brightness : 0;
+        
+        if (currentViewMode === 'field') {
+            drawSim(L, D, lettersData, rMaxBase, obsX, obsH, baseColorVal);
+        } else {
+            drawSimVisibleRange(L, D, lettersData, rMaxBase, obsX, obsH);
+        }
+        
+        drawTopView(L, lettersData, rMaxBase, obsX, baseColorVal);
+        drawSideView(L, lettersData, rMaxBase, obsH, baseColorVal);
+    }
+
+    function drawSim(L, D, lettersData, rMaxBase, obsX, obsH, baseCol) {
+        const ctx = ctxSim;
+        cvSim.width = cvSim.clientWidth; cvSim.height = cvSim.clientHeight;
+        
+        const baseScale = Math.min(cvSim.width / (BOARD_W * 1.4), cvSim.height / (BOARD_H * 1.6));
+        const scale = baseScale * zoomSim;
+        const ox = (cvSim.width - BOARD_W * scale) / 2 + panSim.x;
+        const oy = (cvSim.height - BOARD_H * scale) / 2 + panSim.y;
+
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cvSim.width, cvSim.height);
+
+        const obsY_rel = -(obsH - CENTER_H); 
+        const obsCX = ox + (BOARD_W/2 + obsX) * scale;
+        const obsCY = oy + (BOARD_H/2 + obsY_rel) * scale;
+
+        // Base Board
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(ox, oy, BOARD_W*scale, BOARD_H*scale);
+        ctx.clip();
+
+        const cssBaseColor = `rgb(${baseCol},${baseCol},${baseCol})`;
+        ctx.fillStyle = cssBaseColor; 
+        ctx.fillRect(0,0,cvSim.width, cvSim.height);
+
+        const rBasePx = rMaxBase * scale;
+        const gHole = ctx.createRadialGradient(obsCX, obsCY, 0, obsCX, obsCY, rBasePx);
+        gHole.addColorStop(0, 'rgba(255, 255, 255, 1)'); 
+        gHole.addColorStop(0.8, 'rgba(255, 255, 255, 0.8)');
+        gHole.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
+        ctx.fillStyle = gHole;
+        ctx.fillRect(ox, oy, BOARD_W*scale, BOARD_H*scale);
+        ctx.restore();
+
+        // Letters
+        lettersData.forEach(l => {
+            const tx = ox + l.x * scale;
+            const ty = oy + l.y_baseline * scale;
+            const rCharPx = l.rMax * scale;
+
+            const offCv = document.createElement('canvas');
+            offCv.width = cvSim.width; offCv.height = cvSim.height;
+            const offCtx = offCv.getContext('2d');
+            
+            offCtx.fillStyle = '#000'; 
+            offCtx.font = `bold ${l.size * scale}px Arial, sans-serif`;
+            offCtx.textAlign = 'left'; 
+            offCtx.fillText(l.char, tx, ty);
+            
+            const gChar = offCtx.createRadialGradient(obsCX, obsCY, 0, obsCX, obsCY, rCharPx);
+            
+            if (currentMode === 'negative') {
+                gChar.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                gChar.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                
+                offCtx.globalCompositeOperation = 'source-in';
+                offCtx.fillStyle = gChar;
+                offCtx.fillRect(0,0,offCv.width, offCv.height);
+                
+                ctx.drawImage(offCv, 0, 0);
+
+            } else {
+                const offCv2 = document.createElement('canvas');
+                offCv2.width = cvSim.width; offCv2.height = cvSim.height;
+                const ctx2 = offCv2.getContext('2d');
+                
+                ctx2.fillStyle = cssBaseColor;
+                ctx2.font = `bold ${l.size * scale}px Arial, sans-serif`;
+                ctx2.fillText(l.char, tx, ty); 
+                
+                const gTextHole = ctx2.createRadialGradient(obsCX, obsCY, 0, obsCX, obsCY, rCharPx);
+                gTextHole.addColorStop(0, 'rgba(0,0,0,1)');
+                gTextHole.addColorStop(1, 'rgba(0,0,0,0)');
+                
+                ctx2.globalCompositeOperation = 'destination-out';
+                ctx2.fillStyle = gTextHole;
+                ctx2.fillRect(0,0,offCv2.width, offCv2.height);
+                
+                ctx.drawImage(offCv2, 0, 0);
+            }
+        });
+        
+        ctx.strokeStyle = '#eee'; ctx.lineWidth = 2;
+        ctx.strokeRect(ox, oy, BOARD_W*scale, BOARD_H*scale);
+        
+        // Draw zoom indicator
+        if (zoomSim !== 1) {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${Math.round(zoomSim * 100)}%`, cvSim.width - 10, cvSim.height - 10);
+        }
+    }
+
+    // Visible Range View
+    function drawSimVisibleRange(L, D, lettersData, rMaxBase, obsX, obsH) {
+        const ctx = ctxSim;
+        cvSim.width = cvSim.clientWidth; cvSim.height = cvSim.clientHeight;
+        
+        const baseScale = Math.min(cvSim.width / (BOARD_W * 1.4), cvSim.height / (BOARD_H * 1.6));
+        const scale = baseScale * zoomSim;
+        const ox = (cvSim.width - BOARD_W * scale) / 2 + panSim.x;
+        const oy = (cvSim.height - BOARD_H * scale) / 2 + panSim.y;
+
+        // Store for click detection
+        lastDrawData.scale = scale;
+        lastDrawData.ox = ox;
+        lastDrawData.oy = oy;
+        lastDrawData.letters = [];
+
+        // White background
+        ctx.fillStyle = '#fafafa';
+        ctx.fillRect(0, 0, cvSim.width, cvSim.height);
+
+        // Draw board outline
+        ctx.strokeStyle = '#aaa';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(ox, oy, BOARD_W * scale, BOARD_H * scale);
+
+        // Draw letter outlines
+        ctx.strokeStyle = '#888';
+        ctx.lineWidth = 1.5;
+        ctx.font = `bold ${FONT_SIZE_MM * scale}px Arial, sans-serif`;
+        ctx.textAlign = 'left';
+        
+        lettersData.forEach((l) => {
+            const tx = ox + l.x * scale;
+            const ty = oy + l.y_baseline * scale;
+            ctx.strokeText(l.char, tx, ty);
+        });
+
+        // Calculate letter centers and visible range circles
+        lettersData.forEach((l, i) => {
+            // Calculate the center of each letter
+            const letterCX = ox + (l.x + l.w / 2) * scale;
+            const letterCY = oy + (l.y_baseline - l.size * 0.35) * scale;
+            const rPx = l.rMax * scale;
+
+            // Store for click detection
+            lastDrawData.letters.push({
+                cx: letterCX,
+                cy: letterCY,
+                rPx: rPx,
+                index: i
+            });
+
+            // Draw visible range circle
+            ctx.strokeStyle = l.color;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(letterCX, letterCY, rPx, 0, Math.PI * 2);
+            ctx.stroke();
+        });
+
+        // Draw base visible range (dashed, from board center)
+        const boardCX = ox + (BOARD_W / 2) * scale;
+        const boardCY = oy + (BOARD_H / 2) * scale;
+        const rBasePx = rMaxBase * scale;
+        
+        ctx.strokeStyle = '#4a90d9';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.arc(boardCX, boardCY, rBasePx, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Info text
+        ctx.fillStyle = '#999';
+        ctx.font = '11px Arial, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(`L = ${L} mm`, ox + 10, oy + BOARD_H * scale + 20);
+        
+        // Draw zoom indicator
+        if (zoomSim !== 1) {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${Math.round(zoomSim * 100)}%`, cvSim.width - 10, cvSim.height - 10);
+        }
+    }
+
+    function drawTopView(L, letters, rMaxBase, obsX, baseCol) {
+        const ctx = ctxTop;
+        const cv = cvTop;
+        cv.width = cv.clientWidth; cv.height = cv.clientHeight;
+        
+        const maxDisplayL = Math.max(L * 1.5, 6000);
+        const displayWidth = Math.max(BOARD_W*1.5, Math.abs(obsX)*2 + 500);
+        const baseScaleX = cv.width / displayWidth;
+        const baseScaleY = (cv.height - 40) / maxDisplayL;
+        
+        const scaleX = baseScaleX * zoomTop;
+        const scaleY = baseScaleY * zoomTop;
+        const originX = cv.width / 2 + panTop.x;
+        const boardY = 20 * zoomTop + panTop.y;
+
+        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height);
+        
+        ctx.strokeStyle = '#333'; ctx.lineWidth = 3;
+        ctx.beginPath(); 
+        ctx.moveTo(originX - (BOARD_W/2)*scaleX, boardY); 
+        ctx.lineTo(originX + (BOARD_W/2)*scaleX, boardY); 
+        ctx.stroke();
+
+        // Base Cone
+        ctx.fillStyle = 'rgba(0, 100, 255, 0.1)';
+        ctx.beginPath();
+        ctx.moveTo(originX, boardY);
+        const mat = document.querySelector('input[name="mat_type"]:checked').value;
+        const bright = parseInt(els.brightInput.value);
+        
+        for(let y=0; y<=maxDisplayL; y+=100) {
+            const alpha = calculateAlpha(parseFloat(els.baseT.value), parseFloat(els.D.value), y/1000, 'background', mat, bright);
+            const r = calculateRMax(alpha, y, parseFloat(els.D.value));
+            ctx.lineTo(originX + r*scaleX, boardY + y*scaleY);
+        }
+        for(let y=maxDisplayL; y>=0; y-=100) {
+            const alpha = calculateAlpha(parseFloat(els.baseT.value), parseFloat(els.D.value), y/1000, 'background', mat, bright);
+            const r = calculateRMax(alpha, y, parseFloat(els.D.value));
+            ctx.lineTo(originX - r*scaleX, boardY + y*scaleY);
+        }
+        ctx.fill();
+
+        // Observer distance line
+        const obsY = boardY + L * scaleY;
+
+        // Draw visible range lines at observer distance
+        // Base range
+        const alphaBaseAtL = calculateAlpha(parseFloat(els.baseT.value), parseFloat(els.D.value), L/1000, 'background', mat, bright);
+        const rBaseAtL = calculateRMax(alphaBaseAtL, L, parseFloat(els.D.value));
+        
+        ctx.strokeStyle = '#4a90d9';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 2]);
+        ctx.beginPath();
+        ctx.moveTo(originX - rBaseAtL * scaleX, obsY);
+        ctx.lineTo(originX + rBaseAtL * scaleX, obsY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Text Zones
+        letters.forEach((l, i) => {
+            const charCX = originX + (l.x + l.w/2 - BOARD_W/2)*scaleX;
+            ctx.fillStyle = (currentMode === 'negative') ? 'rgba(255, 0, 0, 0.1)' : 'rgba(0,0,0,0.2)';
+            
+            ctx.beginPath();
+            ctx.moveTo(charCX, boardY);
+            for(let y=100; y<=maxDisplayL; y+=200) {
+                const alpha = calculateAlpha(l.tVal, parseFloat(els.D.value), y/1000, 'text', mat, bright);
+                const r = calculateRMax(alpha, y, parseFloat(els.D.value));
+                ctx.lineTo(charCX + r*scaleX, boardY + y*scaleY);
+            }
+            for(let y=maxDisplayL; y>=100; y-=200) {
+                const alpha = calculateAlpha(l.tVal, parseFloat(els.D.value), y/1000, 'text', mat, bright);
+                const r = calculateRMax(alpha, y, parseFloat(els.D.value));
+                ctx.lineTo(charCX - r*scaleX, boardY + y*scaleY);
+            }
+            ctx.fill();
+
+            // Draw letter visible range line at L
+            ctx.strokeStyle = l.color;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(charCX - l.rMax * scaleX, obsY);
+            ctx.lineTo(charCX + l.rMax * scaleX, obsY);
+            ctx.stroke();
+        });
+
+        // Observer
+        const obsDrawX = originX + obsX * scaleX;
+        
+        ctx.strokeStyle = '#ff4444'; ctx.setLineDash([5, 5]); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, obsY); ctx.lineTo(cv.width, obsY); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath(); ctx.arc(obsDrawX, obsY, 5, 0, Math.PI*2); ctx.fill();
+        
+        // Draw zoom indicator
+        if (zoomTop !== 1) {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${Math.round(zoomTop * 100)}%`, cv.width - 10, cv.height - 10);
+        }
+    }
+
+    function drawSideView(L, letters, rMaxBase, obsH, baseCol) {
+        const ctx = ctxSide;
+        const cv = cvSide;
+        cv.width = cv.clientWidth; cv.height = cv.clientHeight;
+        
+        const maxL = Math.max(L * 1.5, 6000);
+        const maxH = 2500; 
+        const baseScaleY = (cv.width - 40) / maxL;
+        const baseScaleZ = cv.height / maxH;
+        
+        const scaleY = baseScaleY * zoomSide;
+        const scaleZ = baseScaleZ * zoomSide;
+        const boardX = 20 + panSide.x;
+        const groundY = cv.height + panSide.y;
+
+        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height);
+        
+        const boardTopY = groundY - (STAND_H + BOARD_H) * scaleZ;
+        const boardBtmY = groundY - STAND_H * scaleZ;
+        const boardCenterY = groundY - CENTER_H * scaleZ;
+
+        ctx.strokeStyle = '#888'; ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(cv.width, groundY); ctx.stroke();
+        ctx.fillStyle = '#ccc'; ctx.fillRect(boardX-2, boardBtmY, 4, STAND_H * scaleZ);
+        ctx.fillStyle = `rgb(${baseCol},${baseCol},${baseCol})`; 
+        ctx.fillRect(boardX-3, boardTopY, 6, BOARD_H * scaleZ);
+
+        // Base Cone
+        ctx.fillStyle = 'rgba(0, 100, 255, 0.1)';
+        ctx.beginPath();
+        ctx.moveTo(boardX, boardCenterY);
+        
+        const mat = document.querySelector('input[name="mat_type"]:checked').value;
+        const bright = parseInt(els.brightInput.value);
+
+        for(let y=0; y<=maxL; y+=100) {
+            const alpha = calculateAlpha(parseFloat(els.baseT.value), parseFloat(els.D.value), y/1000, 'background', mat, bright);
+            const r = calculateRMax(alpha, y, parseFloat(els.D.value));
+            ctx.lineTo(boardX + y*scaleY, boardCenterY - r*scaleZ);
+        }
+        for(let y=maxL; y>=0; y-=100) {
+            const alpha = calculateAlpha(parseFloat(els.baseT.value), parseFloat(els.D.value), y/1000, 'background', mat, bright);
+            const r = calculateRMax(alpha, y, parseFloat(els.D.value));
+            ctx.lineTo(boardX + y*scaleY, boardCenterY + r*scaleZ);
+        }
+        ctx.fill();
+
+        // Observer distance line
+        const obsDrawX = boardX + L * scaleY;
+
+        // Base visible range at L
+        const alphaBaseAtL = calculateAlpha(parseFloat(els.baseT.value), parseFloat(els.D.value), L/1000, 'background', mat, bright);
+        const rBaseAtL = calculateRMax(alphaBaseAtL, L, parseFloat(els.D.value));
+        
+        ctx.strokeStyle = '#4a90d9';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 2]);
+        ctx.beginPath();
+        ctx.moveTo(obsDrawX, boardCenterY - rBaseAtL * scaleZ);
+        ctx.lineTo(obsDrawX, boardCenterY + rBaseAtL * scaleZ);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Text Cone
+        if(letters.length > 0) {
+            const l = letters[0];
+            ctx.fillStyle = (currentMode === 'negative') ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0,0,0,0.2)';
+            ctx.beginPath();
+            ctx.moveTo(boardX, boardCenterY);
+            for(let y=0; y<=maxL; y+=100) {
+                const alpha = calculateAlpha(l.tVal, parseFloat(els.D.value), y/1000, 'text', mat, bright);
+                const r = calculateRMax(alpha, y, parseFloat(els.D.value));
+                ctx.lineTo(boardX + y*scaleY, boardCenterY - r*scaleZ);
+            }
+            for(let y=maxL; y>=0; y-=100) {
+                const alpha = calculateAlpha(l.tVal, parseFloat(els.D.value), y/1000, 'text', mat, bright);
+                const r = calculateRMax(alpha, y, parseFloat(els.D.value));
+                ctx.lineTo(boardX + y*scaleY, boardCenterY + r*scaleZ);
+            }
+            ctx.fill();
+
+            // Letter visible range at L
+            ctx.strokeStyle = l.color;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(obsDrawX, boardCenterY - l.rMax * scaleZ);
+            ctx.lineTo(obsDrawX, boardCenterY + l.rMax * scaleZ);
+            ctx.stroke();
+        }
+
+        const obsDrawY = groundY - obsH * scaleZ;
+        
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath(); ctx.arc(obsDrawX, obsDrawY, 5, 0, Math.PI*2); ctx.fill();
+        
+        ctx.strokeStyle = '#ffaaaa'; ctx.setLineDash([2,2]);
+        ctx.beginPath(); ctx.moveTo(obsDrawX, obsDrawY); ctx.lineTo(boardX, boardCenterY); ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Draw zoom indicator
+        if (zoomSide !== 1) {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${Math.round(zoomSide * 100)}%`, cv.width - 10, cv.height - 10);
+        }
+    }
+
+    // Init
+    regenerateStructure();
+    window.addEventListener('resize', update);
+
+</script>
+    <script src="common.js"></script>
+</body>
+</html>
