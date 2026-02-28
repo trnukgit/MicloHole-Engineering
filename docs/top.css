@@ -1,0 +1,147 @@
+/* イントロ再生前のコンテナ（ヘッダー含む） */
+.container {
+    opacity: 0;
+    /* style.cssの「transition: 1.0s ease-in」を上書き */
+    transition: opacity 1.0s ease-in 0.5s;
+}
+
+/* イントロ再生前のヘッダーロゴ */
+header .logo {
+    opacity: 0;
+    /* ロゴのクロスフェード（スプラッシュロゴとタイミングを合わせる） */
+    transition: opacity 0.3s ease 1.4s; 
+}
+
+/* ---メインコンテンツ (動画エリア) --- */
+main {
+    flex-grow: 1; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    padding: 6.9vw 0; /* 100px -> 6.9vw */
+
+    opacity: 0; /* 初期状態は透明 */
+    /* ロゴ着地後(1.5s)にフェードイン */
+    transition: opacity 0.5s ease-in 1.5s;
+}
+
+.video-placeholder {
+    padding: 3.5vw 0; /* 50px -> 3.5vw */
+    border: 0px solid #0078FF; 
+    width: 50vw; /* 変更なし */
+    height: 45vh; /* 変更なし */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+
+/* --- 3. コンテンツエリア --- */
+section#content-start {
+    width: 100%;
+    padding-top: 4.2vw; /* 60px -> 4.2vw */
+    padding-bottom: 3.5vw; /* 50px -> 3.5vw */
+}
+
+/* メインのテキスト */
+.content-text-main,
+.content-text-sub {
+    font-size: 1rem; /* 変更なし */
+    font-weight: 10; 
+    color: #606060;
+    line-height: 1.7; /* 変更なし */
+    letter-spacing: 0.05em; /* 変更なし */
+    
+    margin-bottom: 2.8vw; /* 40px -> 2.8vw */
+    margin-left: 8vw;
+    max-width: 41.7vw; /* 600px -> 41.7vw */
+}
+
+/* 図解イラスト */
+.content-images {
+    margin-top: 3.5vw; /* 50px -> 3.5vw */
+    margin-bottom: 3.5vw; /* 50px -> 3.5vw */
+    margin-left: 8vw;
+}
+
+.content-images img {
+    max-width: 9.4vw; /* 135px -> 9.4vw */
+    height: auto;
+    display: block;
+}
+
+/* Studiesタイトル */
+.studies-title {
+    padding: 10.4vw 0; /* 150px -> 10.4vw */
+    
+    font-size: 2rem; /* 変更なし */
+    font-weight: 500; 
+    color: #aaa; 
+    margin: 0; 
+    text-align: center;
+    position: relative;
+}
+
+.tool-title {
+    padding: 10vw 6.9vw; /* 上下に余白追加 */
+    
+    font-size: 2rem; /* 変更なし */
+    font-weight: 500; 
+    color: #aaa; 
+    margin: 0; 
+    text-align: center;
+    position: relative;
+}
+
+.studies-title::before {
+    content: '';
+    display: block;
+    
+    width: 1.2px; /* 細い線はpxのままが綺麗です */
+    height: 10.4vw; /* 150px -> 10.4vw */
+    background-color: #d1d1d1;
+    
+    margin: 0 auto 2.8vw; /* 40px -> 2.8vw */
+}
+
+a.title-link {
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.2s ease;
+}
+
+a.title-link:hover {
+    color: #555;
+}
+
+/* --- イントロ開始後 --- */
+body.intro-started #splash-screen {
+    pointer-events: none;
+    background-color: transparent;
+}
+
+body.intro-started .splash-logo {
+    top: 1.4vw; /* 20px -> 1.4vw */
+    left: 50%;
+    transform: translate(-50%, 0);
+    opacity: 0;
+    
+    /* ロゴ移動(1.5s)と、フェードアウト(1.4s地点から0.3s) */
+    transition: all 1.5s cubic-bezier(0.65, 0, 0.35, 1), 
+                opacity 0.3s ease 1.4s;
+}
+
+/* コンテンツを表示 */
+body.intro-started .container {
+    opacity: 1;
+}
+/* ヘッダーの「本物の」ロゴを表示 */
+body.intro-started header .logo {
+    opacity: 1;
+}
+/* メイン動画（のエリア）を表示 */
+body.intro-started main {
+    opacity: 1;
+}
