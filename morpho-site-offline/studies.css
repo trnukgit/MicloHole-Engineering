@@ -1,0 +1,24 @@
+/* studies.css (Studiesページ専用CSS)
+*/
+
+/* Studiesページ トップの動画エリア */
+.studies-top-video {
+    /* トップページ (top.css) の .video-placeholder と
+      同じようなスタイルを適用 
+    */
+    padding: 16vw 0px;
+    width: 60vw; /* 動画の横幅（お好みで 100vw などに変更可） */
+    margin: 0 auto; /* 中央揃え */
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* スクロール先のコンテンツエリア */
+#studies-content {
+    padding: 7vw 0; /* 上下の余白 */
+    width: 100%;
+}
+
+/* (↓その他、Studiesページ専用のスタイルをここに追加) */

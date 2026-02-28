@@ -1,0 +1,137 @@
+/* ページ遷移用のフェード画面 */
+#page-fader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #f1f1f1; /* 背景色に合わせる */
+    z-index: 9998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.0s ease; /* ゆっくりフェード */
+}
+/* JSでこのクラスが付くとフェードアウト */
+body.is-fading #page-fader {
+    opacity: 1;
+}
+
+/* イントロ画面 (トップページでのみ使用) */
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #f1f1f1; /* 背景色 */
+    z-index: 9999;
+    cursor: pointer;
+    /* JSでクラスが付くと、背景だけ透明に */
+    transition: background-color 1.0s ease;
+}
+
+/* イントロ用のロゴ (これが動く) */
+.splash-logo {
+    position: absolute;
+    /* 1. 初期状態: ど真ん中 */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    
+    height: 3.5vw; /* 50px -> 3.5vw (基準幅1440px) */
+    
+    opacity: 0;
+    transition: opacity 1.0s ease;/* ページ読み込み時のフェードイン用 */
+}
+
+.splash-logo.is-visible {
+    opacity: 1;
+}
+
+/* --- 基本設定 --- */
+body, html {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #f1f1f1; 
+    font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 300; 
+    color: #333;
+}
+
+/* --- 全体のレイアウト --- */
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    
+    padding: 0 3.5vw; /* 50px -> 3.5vw */
+    
+    /* 全ページ共通のフェードイン設定 */
+    opacity: 0;
+    transition: opacity 1.0s ease-in;
+}
+
+/* JSがbodyに 'is-visible' を追加したらフェードイン */
+body.is-visible .container {
+    opacity: 1;
+}
+
+/* --- 1. ヘッダーナビゲーション --- */
+header {
+    width: 100%;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px 0; /* 上下はpx指定のままがバランス良いです */
+    position: relative;
+    
+    min-height: 4.2vw; /* 60px -> 4.2vw */
+}
+
+.logo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.logo img {
+    margin-top: 0.7vw; /* 10px -> 0.7vw */
+    height: 3.5vw; /* 50px -> 3.5vw */
+    
+    width: auto; /* 幅は自動調整 */
+    display: block; /* 余分な下余白をなくす */
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+nav li {
+    margin: 0 1.4vw; /* 20px -> 1.4vw */
+}
+
+.nav-right {
+    margin-left: auto; /* 右端に移動 */
+}
+
+.nav-left a,
+.nav-right a {
+    text-decoration: none;
+    color: #aaa;
+    font-size: 0.8rem; /* rem単位はレスポンシブなので変更なし */
+    font-weight: 500;
+    transition: color 0.2s ease; /* 色が滑らかに変わるアニメーション */
+}
+
+/* 左右のナビゲーションリンクをホバーした時 */
+.nav-left a:hover,
+.nav-right a:hover {
+    color: #555; /* 濃いグレー */
+}
