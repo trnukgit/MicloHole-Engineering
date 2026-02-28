@@ -41,7 +41,7 @@ main {
 /* --- 3. コンテンツエリア --- */
 section#content-start {
     width: 100%;
-    padding-top: 4.2vw; /* 60px -> 4.2vw */
+    padding-top: 6.2vw; /* 60px -> 4.2vw */
     padding-bottom: 3.5vw; /* 50px -> 3.5vw */
 }
 
