@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Signage Simulation - MORPHO</title>
     <style>
-        /* --- CSS Reset & Variables --- */
+        
         :root {
             --bg-color: #f2f2f2;
             --panel-bg: #eaeaea;
@@ -29,7 +29,7 @@
             padding: 20px;
         }
 
-        /* --- Tool Navigation --- */
+        
         .tool-nav {
             width: 100%;
             max-width: 1400px;
@@ -75,7 +75,7 @@
             background: #fff;
         }
 
-        /* --- Layout --- */
+        
         #app-container {
             display: grid;
             grid-template-columns: 360px 1fr;
@@ -90,7 +90,7 @@
             #app-container { grid-template-columns: 1fr; height: auto; }
         }
 
-        /* --- Sidebar (Controls) --- */
+        
         #sidebar {
             background-color: var(--panel-bg);
             border-radius: var(--radius-main);
@@ -118,7 +118,7 @@
             display: block;
         }
 
-        /* Input Rows */
+        
         .input-row {
             display: flex;
             justify-content: space-between;
@@ -184,7 +184,7 @@
             cursor: pointer;
         }
 
-        /* Mode Switch Buttons */
+        
         .mode-switch {
             display: flex;
             background: #dcdcdc;
@@ -211,7 +211,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        /* Material / Color Controls */
+        
         .radio-group {
             display: flex;
             gap: 16px;
@@ -233,7 +233,7 @@
             padding: 12px;
             border-radius: 8px;
             margin-top: 8px;
-            display: none; /* toggled by JS */
+            display: none; 
         }
         .color-preview-bar {
             height: 6px;
@@ -244,7 +244,7 @@
             background: #808080;
         }
 
-        /* Text Settings Area */
+        
         .padding-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -269,7 +269,7 @@
             font-size: 12px;
         }
 
-        /* --- Main Content (Views) --- */
+        
         #main-view {
             display: flex;
             flex-direction: column;
@@ -320,7 +320,7 @@
 
         canvas { width: 100%; height: 100%; display: block; }
 
-        /* View Mode Switch */
+        
         .view-mode-switch {
             position: absolute;
             top: 12px;
@@ -348,7 +348,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        /* Hidden color input */
+        
         .hidden-color-input {
             position: absolute;
             opacity: 0;
@@ -499,24 +499,24 @@
     </div>
 
 <script>
-    // --- 1. MATHEMATICAL MODEL (Chapter 6) ---
+    
     const K0 = 0.961;
     const TABLE_K_DT = [{x:0.25,y:1.275},{x:0.33,y:1.187},{x:0.37,y:1.147},{x:0.40,y:1.121},{x:0.45,y:1.082},{x:0.50,y:1.048},{x:0.60,y:1.000},{x:0.66,y:0.972},{x:0.83,y:0.906},{x:0.90,y:0.885},{x:1.00,y:0.857},{x:1.20,y:0.811},{x:1.25,y:0.801},{x:1.50,y:0.757}];
     const TABLE_K_DIST = [{x:0.5,y:1.193},{x:1.0,y:1.091},{x:2.0,y:1.000},{x:4.0,y:0.917},{x:6.0,y:0.857}];
     
-    // Transparent Coefficients
+    
     const COEFF_TRANS_TEXT = 1.000;
     const COEFF_TRANS_BG = 1.132;
-    // Opaque Coefficients (Interpolation Targets)
+    
     const OPAQUE_DATA = { black: {text:0.947, bg:1.341}, white: {text:0.713, bg:1.001} };
 
-    // Default colors for visible range circles
+    
     const DEFAULT_COLORS = [
         '#e63946', '#2a9d8f', '#f4a261', '#264653', '#9b5de5',
         '#00bbf9', '#00f5d4', '#fee440', '#f15bb5', '#3a86ff'
     ];
 
-    // Basic Interpolation
+    
     function interpolate(val, table) {
         table.sort((a,b)=>a.x-b.x);
         if(val<=table[0].x) { const p1=table[0],p2=table[1]; return p1.y+(val-p1.x)*(p2.y-p1.y)/(p2.x-p1.x); }
@@ -530,12 +530,12 @@
         return table[0].y;
     }
 
-    // Material Coefficient Logic
+    
     function getColContCoefficient(matType, brightness, task) {
         if (matType === 'transparent') {
             return task === 'text' ? COEFF_TRANS_TEXT : COEFF_TRANS_BG;
         } else {
-            // Opaque Linear Interpolation (0-255)
+            
             const r = brightness / 255.0;
             const start = OPAQUE_DATA.black[task==='text'?'text':'bg'];
             const end = OPAQUE_DATA.white[task==='text'?'text':'bg'];
@@ -543,7 +543,7 @@
         }
     }
 
-    // Core Prediction
+    
     function calculateAlpha(T, D, L_meter, taskType, matType, brightness) {
         const geomDeg = (2 * Math.atan(D / T)) * (180 / Math.PI);
         const k_dt = interpolate(D / T, TABLE_K_DT);
@@ -553,14 +553,14 @@
         return geomDeg * K0 * k_dt * k_dist * k_col;
     }
 
-    // Radius Calculation
+    
     function calculateRMax(alphaDeg, L_mm, D_mm) {
         const halfRad = (alphaDeg * Math.PI / 180) / 2;
         return (D_mm / 2) + L_mm * Math.tan(halfRad);
     }
 
 
-    // --- 2. APP LOGIC ---
+    
 
     const STAND_H = 800; 
     const MOUNT_Y = 800; 
@@ -570,9 +570,9 @@
     let BOARD_H = 0;
     let CENTER_H = 0;
     let currentMode = 'negative';
-    let currentViewMode = 'field'; // 'field' or 'range'
+    let currentViewMode = 'field';
 
-    // Zoom levels for each view
+    
     let zoomSim = 1;
     let zoomTop = 1;
     let zoomSide = 1;
@@ -582,9 +582,9 @@
 
     let generatedLetters = [];
     let generatedBase = {}; 
-    let letterColors = []; // Color for each letter's visible range
+    let letterColors = [];
 
-    // Canvas
+    
     const cvSim = document.getElementById('canvasSim');
     const ctxSim = cvSim.getContext('2d');
     const cvTop = document.getElementById('canvasTop');
@@ -592,7 +592,7 @@
     const cvSide = document.getElementById('canvasSide');
     const ctxSide = cvSide.getContext('2d');
 
-    // UI Elements
+    
     const els = {
         input: document.getElementById('inputText'),
         fontSize: document.getElementById('inputFontSize'),
@@ -613,19 +613,19 @@
         numObsH: document.getElementById('numObsHeight'),
         btnNeg: document.getElementById('btnNegative'),
         btnPos: document.getElementById('btnPositive'),
-        // Color Controls
+        
         matRadios: document.getElementsByName('mat_type'),
         brightPanel: document.getElementById('group-brightness'),
         brightInput: document.getElementById('input-brightness'),
         brightVal: document.getElementById('val-brightness'),
         brightBar: document.getElementById('preview-color-bar'),
-        // View Mode
+        
         btnViewField: document.getElementById('btnViewField'),
         btnViewRange: document.getElementById('btnViewRange'),
         colorPicker: document.getElementById('hiddenColorPicker')
     };
 
-    // UI Bindings
+    
     function bindInput(rangeId, numId) {
         const range = document.getElementById(rangeId);
         const num = document.getElementById(numId);
@@ -642,7 +642,7 @@
         el.addEventListener('input', regenerateStructure);
     });
 
-    // Color UI Logic
+    
     els.matRadios.forEach(r => r.addEventListener('change', (e) => {
         els.brightPanel.style.display = (e.target.value === 'opaque') ? 'block' : 'none';
         update();
@@ -656,7 +656,7 @@
 
     let textInputs = [];
 
-    // View Mode Setting
+    
     window.setViewMode = function(mode) {
         currentViewMode = mode;
         if (mode === 'field') {
@@ -669,7 +669,7 @@
         update();
     }
 
-    // Mode Setting
+    
     window.setMode = function(mode) {
         currentMode = mode;
         if(mode === 'negative') {
@@ -693,7 +693,7 @@
         update();
     }
 
-    // Structure Generation
+    
     function regenerateStructure() {
         const text = els.input.value || " ";
         FONT_SIZE_MM = parseFloat(els.fontSize.value) || 300;
@@ -788,14 +788,14 @@
         selectedLetterIndex = -1;
     });
 
-    // Drag state (defined early for mousemove handler)
+    
     let isDragging = false;
     let dragTarget = null;
     let dragStartX = 0;
     let dragStartY = 0;
     let dragStartPan = { x: 0, y: 0 };
 
-    // Store last calculated data for click detection
+    
     let lastDrawData = {
         scale: 1,
         ox: 0,
@@ -803,7 +803,7 @@
         letters: []
     };
 
-    // Canvas click handler for visible range circles
+    
     cvSim.addEventListener('click', (e) => {
         if (currentViewMode !== 'range') return;
 
@@ -811,12 +811,12 @@
         const clickX = (e.clientX - rect.left) * (cvSim.width / rect.width);
         const clickY = (e.clientY - rect.top) * (cvSim.height / rect.height);
 
-        // Check each letter's circle (reverse order for top layer first)
+        
         for (let i = lastDrawData.letters.length - 1; i >= 0; i--) {
             const l = lastDrawData.letters[i];
             const dist = Math.sqrt((clickX - l.cx) ** 2 + (clickY - l.cy) ** 2);
             
-            // Check if click is near the circle edge (within 20px tolerance)
+            
             if (Math.abs(dist - l.rPx) < 20) {
                 openColorPicker(i);
                 return;
@@ -824,9 +824,9 @@
         }
     });
 
-    // Change cursor on hover near circles
+    
     cvSim.addEventListener('mousemove', (e) => {
-        if (isDragging) return; // Don't change cursor while dragging
+        if (isDragging) return;
         
         if (currentViewMode !== 'range') {
             cvSim.style.cursor = 'grab';
@@ -849,7 +849,7 @@
         cvSim.style.cursor = nearCircle ? 'pointer' : 'grab';
     });
 
-    // Zoom functionality for each canvas
+    
     function handleZoom(e, canvasType) {
         e.preventDefault();
         const delta = e.deltaY > 0 ? 0.9 : 1.1;
@@ -860,7 +860,7 @@
         if (canvasType === 'sim') {
             const oldZoom = zoomSim;
             zoomSim = Math.max(0.5, Math.min(5, zoomSim * delta));
-            // Adjust pan to zoom towards mouse position
+            
             const zoomRatio = zoomSim / oldZoom;
             panSim.x = mouseX - (mouseX - panSim.x) * zoomRatio;
             panSim.y = mouseY - (mouseY - panSim.y) * zoomRatio;
@@ -884,14 +884,14 @@
     cvTop.addEventListener('wheel', (e) => handleZoom(e, 'top'), { passive: false });
     cvSide.addEventListener('wheel', (e) => handleZoom(e, 'side'), { passive: false });
 
-    // Double-click to reset zoom
+    
     cvSim.addEventListener('dblclick', () => { zoomSim = 1; panSim = { x: 0, y: 0 }; update(); });
     cvTop.addEventListener('dblclick', () => { zoomTop = 1; panTop = { x: 0, y: 0 }; update(); });
     cvSide.addEventListener('dblclick', () => { zoomSide = 1; panSide = { x: 0, y: 0 }; update(); });
 
-    // Drag to pan functionality
+    
     function handleDragStart(e, canvasType) {
-        // Only start drag if not clicking on a circle in range mode
+        
         if (canvasType === 'sim' && currentViewMode === 'range') {
             const rect = cvSim.getBoundingClientRect();
             const mouseX = (e.clientX - rect.left) * (cvSim.width / rect.width);
@@ -901,7 +901,7 @@
                 const l = lastDrawData.letters[i];
                 const dist = Math.sqrt((mouseX - l.cx) ** 2 + (mouseY - l.cy) ** 2);
                 if (Math.abs(dist - l.rPx) < 20) {
-                    return; // Don't start drag if clicking on circle
+                    return;
                 }
             }
         }
@@ -964,12 +964,12 @@
     document.addEventListener('mousemove', handleDragMove);
     document.addEventListener('mouseup', handleDragEnd);
 
-    // Set initial cursors
+    
     cvSim.style.cursor = 'grab';
     cvTop.style.cursor = 'grab';
     cvSide.style.cursor = 'grab';
 
-    // --- DRAWING & SIMULATION ---
+    
 
     function update() {
         const L = parseFloat(els.L.value);
@@ -979,11 +979,11 @@
         const baseT = parseFloat(els.baseT.value);
         const T_chars = textInputs.map(input => parseFloat(input.value));
         
-        // Color Settings
+        
         const matType = document.querySelector('input[name="mat_type"]:checked').value;
         const brightness = parseInt(els.brightInput.value);
 
-        // 1. Calculate Alpha & R_max
+        
         const alphaBase = calculateAlpha(baseT, D, L/1000, 'background', matType, brightness);
         const rMaxBase = calculateRMax(alphaBase, L, D);
 
@@ -994,7 +994,7 @@
             return { ...l, alpha, rMax, tVal, color: letterColors[i] };
         });
 
-        // Pass Color Settings to Draw
+        
         const baseColorVal = (matType==='opaque') ? brightness : 0;
         
         if (currentViewMode === 'field') {
@@ -1022,7 +1022,7 @@
         const obsCX = ox + (BOARD_W/2 + obsX) * scale;
         const obsCY = oy + (BOARD_H/2 + obsY_rel) * scale;
 
-        // Base Board
+        
         ctx.save();
         ctx.beginPath();
         ctx.rect(ox, oy, BOARD_W*scale, BOARD_H*scale);
@@ -1042,7 +1042,7 @@
         ctx.fillRect(ox, oy, BOARD_W*scale, BOARD_H*scale);
         ctx.restore();
 
-        // Letters
+        
         lettersData.forEach(l => {
             const tx = ox + l.x * scale;
             const ty = oy + l.y_baseline * scale;
@@ -1093,7 +1093,7 @@
         ctx.strokeStyle = '#eee'; ctx.lineWidth = 2;
         ctx.strokeRect(ox, oy, BOARD_W*scale, BOARD_H*scale);
         
-        // Draw zoom indicator
+        
         if (zoomSim !== 1) {
             ctx.fillStyle = 'rgba(0,0,0,0.5)';
             ctx.font = '11px Arial';
@@ -1102,7 +1102,7 @@
         }
     }
 
-    // Visible Range View
+    
     function drawSimVisibleRange(L, D, lettersData, rMaxBase, obsX, obsH) {
         const ctx = ctxSim;
         cvSim.width = cvSim.clientWidth; cvSim.height = cvSim.clientHeight;
@@ -1112,22 +1112,22 @@
         const ox = (cvSim.width - BOARD_W * scale) / 2 + panSim.x;
         const oy = (cvSim.height - BOARD_H * scale) / 2 + panSim.y;
 
-        // Store for click detection
+        
         lastDrawData.scale = scale;
         lastDrawData.ox = ox;
         lastDrawData.oy = oy;
         lastDrawData.letters = [];
 
-        // White background
+        
         ctx.fillStyle = '#fafafa';
         ctx.fillRect(0, 0, cvSim.width, cvSim.height);
 
-        // Draw board outline
+        
         ctx.strokeStyle = '#aaa';
         ctx.lineWidth = 2;
         ctx.strokeRect(ox, oy, BOARD_W * scale, BOARD_H * scale);
 
-        // Draw letter outlines
+        
         ctx.strokeStyle = '#888';
         ctx.lineWidth = 1.5;
         ctx.font = `bold ${FONT_SIZE_MM * scale}px Arial, sans-serif`;
@@ -1139,14 +1139,14 @@
             ctx.strokeText(l.char, tx, ty);
         });
 
-        // Calculate letter centers and visible range circles
+        
         lettersData.forEach((l, i) => {
-            // Calculate the center of each letter
+            
             const letterCX = ox + (l.x + l.w / 2) * scale;
             const letterCY = oy + (l.y_baseline - l.size * 0.35) * scale;
             const rPx = l.rMax * scale;
 
-            // Store for click detection
+            
             lastDrawData.letters.push({
                 cx: letterCX,
                 cy: letterCY,
@@ -1154,7 +1154,7 @@
                 index: i
             });
 
-            // Draw visible range circle
+            
             ctx.strokeStyle = l.color;
             ctx.lineWidth = 1.5;
             ctx.beginPath();
@@ -1162,7 +1162,7 @@
             ctx.stroke();
         });
 
-        // Draw base visible range (dashed, from board center)
+        
         const boardCX = ox + (BOARD_W / 2) * scale;
         const boardCY = oy + (BOARD_H / 2) * scale;
         const rBasePx = rMaxBase * scale;
@@ -1175,13 +1175,13 @@
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Info text
+        
         ctx.fillStyle = '#999';
         ctx.font = '11px Arial, sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(`L = ${L} mm`, ox + 10, oy + BOARD_H * scale + 20);
         
-        // Draw zoom indicator
+        
         if (zoomSim !== 1) {
             ctx.fillStyle = 'rgba(0,0,0,0.5)';
             ctx.font = '11px Arial';
@@ -1213,7 +1213,7 @@
         ctx.lineTo(originX + (BOARD_W/2)*scaleX, boardY); 
         ctx.stroke();
 
-        // Base Cone
+        
         ctx.fillStyle = 'rgba(0, 100, 255, 0.1)';
         ctx.beginPath();
         ctx.moveTo(originX, boardY);
@@ -1232,11 +1232,11 @@
         }
         ctx.fill();
 
-        // Observer distance line
+        
         const obsY = boardY + L * scaleY;
 
-        // Draw visible range lines at observer distance
-        // Base range
+        
+        
         const alphaBaseAtL = calculateAlpha(parseFloat(els.baseT.value), parseFloat(els.D.value), L/1000, 'background', mat, bright);
         const rBaseAtL = calculateRMax(alphaBaseAtL, L, parseFloat(els.D.value));
         
@@ -1249,7 +1249,7 @@
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Text Zones
+        
         letters.forEach((l, i) => {
             const charCX = originX + (l.x + l.w/2 - BOARD_W/2)*scaleX;
             ctx.fillStyle = (currentMode === 'negative') ? 'rgba(255, 0, 0, 0.1)' : 'rgba(0,0,0,0.2)';
@@ -1268,7 +1268,7 @@
             }
             ctx.fill();
 
-            // Draw letter visible range line at L
+            
             ctx.strokeStyle = l.color;
             ctx.lineWidth = 1.5;
             ctx.beginPath();
@@ -1277,7 +1277,7 @@
             ctx.stroke();
         });
 
-        // Observer
+        
         const obsDrawX = originX + obsX * scaleX;
         
         ctx.strokeStyle = '#ff4444'; ctx.setLineDash([5, 5]); ctx.lineWidth = 1;
@@ -1285,7 +1285,7 @@
         ctx.fillStyle = '#ff0000';
         ctx.beginPath(); ctx.arc(obsDrawX, obsY, 5, 0, Math.PI*2); ctx.fill();
         
-        // Draw zoom indicator
+        
         if (zoomTop !== 1) {
             ctx.fillStyle = 'rgba(0,0,0,0.5)';
             ctx.font = '11px Arial';
@@ -1320,7 +1320,7 @@
         ctx.fillStyle = `rgb(${baseCol},${baseCol},${baseCol})`; 
         ctx.fillRect(boardX-3, boardTopY, 6, BOARD_H * scaleZ);
 
-        // Base Cone
+        
         ctx.fillStyle = 'rgba(0, 100, 255, 0.1)';
         ctx.beginPath();
         ctx.moveTo(boardX, boardCenterY);
@@ -1340,10 +1340,10 @@
         }
         ctx.fill();
 
-        // Observer distance line
+        
         const obsDrawX = boardX + L * scaleY;
 
-        // Base visible range at L
+        
         const alphaBaseAtL = calculateAlpha(parseFloat(els.baseT.value), parseFloat(els.D.value), L/1000, 'background', mat, bright);
         const rBaseAtL = calculateRMax(alphaBaseAtL, L, parseFloat(els.D.value));
         
@@ -1356,7 +1356,7 @@
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Text Cone
+        
         if(letters.length > 0) {
             const l = letters[0];
             ctx.fillStyle = (currentMode === 'negative') ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0,0,0,0.2)';
@@ -1374,7 +1374,7 @@
             }
             ctx.fill();
 
-            // Letter visible range at L
+            
             ctx.strokeStyle = l.color;
             ctx.lineWidth = 1.5;
             ctx.beginPath();
@@ -1392,7 +1392,7 @@
         ctx.beginPath(); ctx.moveTo(obsDrawX, obsDrawY); ctx.lineTo(boardX, boardCenterY); ctx.stroke();
         ctx.setLineDash([]);
         
-        // Draw zoom indicator
+        
         if (zoomSide !== 1) {
             ctx.fillStyle = 'rgba(0,0,0,0.5)';
             ctx.font = '11px Arial';
@@ -1401,7 +1401,7 @@
         }
     }
 
-    // Init
+    
     regenerateStructure();
     window.addEventListener('resize', update);
 

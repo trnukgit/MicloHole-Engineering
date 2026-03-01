@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Parameter Optimization - MORPHO</title>
-    <!-- オフライン用: lib/three.min.js を配置してください -->
     <script src="lib/three.min.js"></script>
     <style>
-        /* --- CSS Reset & Variables (Flat Design) --- */
+        
         :root {
             --bg-color: #f2f2f2;
             --panel-bg: #eaeaea;
@@ -31,7 +30,7 @@
             padding: 20px 20px 40px 20px;
         }
 
-        /* --- Tool Navigation --- */
+        
         .tool-nav {
             width: 100%;
             max-width: 1200px;
@@ -77,7 +76,7 @@
             background: #fff;
         }
 
-        /* --- Header & Mode Selector --- */
+        
         .app-mode-selector {
             display: flex;
             background: #e0e0e0;
@@ -104,7 +103,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
-        /* --- Main Layout --- */
+        
         main {
             display: grid;
             grid-template-columns: 360px 1fr;
@@ -119,7 +118,7 @@
             main { grid-template-columns: 1fr; height: auto; }
         }
 
-        /* --- Left Panel (Controls) --- */
+        
         .controls-panel {
             background-color: var(--panel-bg);
             border-radius: var(--radius-main);
@@ -133,7 +132,7 @@
         
         .controls-panel.hidden { display: none; }
 
-        /* View Toggles */
+        
         .view-toggles {
             display: flex;
             background: #dcdcdc;
@@ -154,7 +153,7 @@
         }
         .view-btn.active { background: white; color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
-        /* Block Style */
+        
         .control-block {
             display: flex;
             flex-direction: column;
@@ -169,7 +168,7 @@
             display: block;
         }
 
-        /* --- Form Elements --- */
+        
         .control-row { margin-bottom: 12px; }
 
         .label-row {
@@ -182,7 +181,7 @@
             color: var(--text-main);
         }
 
-        /* Slider + Input Layout */
+        
         .input-slider-group {
             display: flex;
             align-items: center;
@@ -224,7 +223,7 @@
 
         .unit { font-size: 12px; color: var(--text-sub); width: 24px; }
 
-        /* Select & Radio */
+        
         select.full-width {
             width: 100%;
             padding: 10px;
@@ -252,7 +251,7 @@
         }
         input[type="radio"] { accent-color: var(--accent-color); }
 
-        /* Buttons */
+        
         .btn-primary {
             width: 100%;
             padding: 14px;
@@ -269,7 +268,7 @@
         .btn-primary:hover { opacity: 0.9; }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* --- Right Panel (Canvas) --- */
+        
         .canvas-area {
             background-color: white;
             border-radius: var(--radius-main);
@@ -283,7 +282,7 @@
             border: 1px solid var(--border-color);
         }
 
-        /* Help Popup */
+        
         .help-icon {
             display: inline-flex; justify-content: center; align-items: center;
             width: 18px; height: 18px; background: #ddd; border-radius: 50%;
@@ -300,7 +299,7 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
 
-        /* Results List */
+        
         .result-card {
             background: white; padding: 12px; border-radius: 8px;
             margin-bottom: 8px; cursor: pointer; border: 1px solid transparent;
@@ -309,7 +308,7 @@
         .result-card:hover { border-color: var(--accent-color); transform: translateY(-2px); }
         .rank { background: var(--accent-color); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-right: 6px; }
 
-        /* Notification */
+        
         .notification {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
             background: #333; color: white; padding: 10px 24px; border-radius: 30px;
@@ -525,9 +524,9 @@
     <div id="notification" class="notification">Message</div>
 
     <script>
-        /* --- LOGIC --- */
+        
 
-        // 1. Mode Switching
+        
         const btnAuto = document.getElementById('btn-mode-auto');
         const btnManual = document.getElementById('btn-mode-manual');
         const panelAuto = document.getElementById('panel-auto');
@@ -542,7 +541,7 @@
             panelManual.classList.remove('hidden'); panelAuto.classList.add('hidden');
         };
 
-        // 2. View Switching (Sync between panels)
+        
         const viewBtns = document.querySelectorAll('.view-btn');
         const canvas2d = document.getElementById('canvas-2d');
         const canvas3d = document.getElementById('canvas-3d');
@@ -551,7 +550,7 @@
         viewBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const view = e.target.dataset.view;
-                // Sync all buttons
+                
                 viewBtns.forEach(b => {
                     if(b.dataset.view === view) b.classList.add('active');
                     else b.classList.remove('active');
@@ -569,7 +568,7 @@
             });
         });
 
-        // 3. UI Helpers
+        
         const radiosMat = document.getElementsByName('mat_type');
         const groupBright = document.getElementById('group-brightness');
         radiosMat.forEach(r => r.addEventListener('change', (e) => {
@@ -591,7 +590,7 @@
             if(e.target.id === 'popup-help') e.target.classList.remove('show');
         };
 
-        // 4. Math Logic
+        
         const K0 = 0.961;
         const TABLE_K_DT = [{x:0.25,y:1.275},{x:0.33,y:1.187},{x:0.37,y:1.147},{x:0.40,y:1.121},{x:0.45,y:1.082},{x:0.50,y:1.048},{x:0.60,y:1.000},{x:0.66,y:0.972},{x:0.83,y:0.906},{x:0.90,y:0.885},{x:1.00,y:0.857},{x:1.20,y:0.811},{x:1.25,y:0.801},{x:1.50,y:0.757}];
         const TABLE_K_DIST = [{x:0.5,y:1.193},{x:1.0,y:1.091},{x:2.0,y:1.000},{x:4.0,y:0.917},{x:6.0,y:0.857}];
@@ -627,7 +626,7 @@
             return geom * K0 * kdt * kdist * kcol;
         }
 
-        // 5. Auto Calculation
+        
         document.getElementById('form-auto').addEventListener('submit', (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-calc');
@@ -649,7 +648,7 @@
                     for(let d=Dmin; d<=Dmax; d+=0.2) {
                         if(d>t) continue;
                         for(let p=Pmin; p<=Pmax; p+=0.2) {
-                            if(p<0.1) continue; // Minimum physical spacing limit
+                            if(p<0.1) continue;
                             for(let l=Lmin; l<=Lmax; l+=0.5) {
                                 const ang = calcAngle(t, d, l, mat, bright, task);
                                 const w = 2*(l*1000)*Math.tan((ang*Math.PI/180)/2);
@@ -671,17 +670,17 @@
                 const list = document.getElementById('results-list');
                 list.innerHTML = "";
                 if(cands.length===0) {
-                    // ヒントを生成
+                    
                     let hints = [];
                     
-                    // 原因1: D > T の条件で全てスキップされている
+                    
                     if(Dmin > Tmax) {
                         hints.push(`穴径の最小値 (${Dmin}mm) が厚みの最大値 (${Tmax}mm) より大きいです。<br>→ <strong>厚みを ${Dmin}mm 以上にする</strong>か、<strong>穴径を ${Tmax}mm 以下にする</strong>`);
                     }
                     
-                    // 原因2: 目標角度が達成不可能
+                    
                     if(target !== null) {
-                        // 達成可能な角度範囲を計算
+                        
                         let minAng = Infinity, maxAng = 0;
                         for(let t = Tmin; t <= Tmax; t += 0.5) {
                             for(let d = Dmin; d <= Dmax; d += 0.2) {
@@ -698,12 +697,12 @@
                         }
                     }
                     
-                    // 原因3: 範囲が狭すぎる
+                    
                     if(Tmin > Tmax || Dmin > Dmax || Pmin > Pmax || Lmin > Lmax) {
                         hints.push(`パラメータの範囲指定が不正です（最小値 > 最大値）。<br>→ 各パラメータの最小値と最大値を確認してください`);
                     }
                     
-                    // ヒントがなければ一般的なアドバイス
+                    
                     if(hints.length === 0) {
                         hints.push(`条件を満たす組み合わせが見つかりませんでした。<br>→ <strong>厚みを大きく</strong>するか、<strong>穴径を小さく</strong>してみてください`);
                     }
@@ -738,7 +737,7 @@
             }, 50);
         });
 
-        // 6. Manual & Preview Logic
+        
         const sW = document.getElementById('man-w-slider'), iW = document.getElementById('man-w-input');
         const sH = document.getElementById('man-h-slider'), iH = document.getElementById('man-h-input');
         const sT = document.getElementById('man-t-slider'), iT = document.getElementById('man-t-input');
@@ -756,7 +755,7 @@
             const T = parseFloat(sT.value), D = parseFloat(sD.value);
             let P = parseFloat(sP.value);
             
-            // Allow small gaps, just minimal constraint
+            
             if(P < 0.1) { P = 0.1; sP.value = P; iP.value = P; }
 
             const ang = calcAngle(T, D, 2.0, 'transparent', 0, 'text'); 
@@ -770,18 +769,18 @@
             if(is3D) draw3D(W, H, T, D, P);
         }
 
-        // Draw 2D: Wireframe style with fine lines
+        
         function draw2D(bW, bH, D, P) {
             const svg = document.getElementById('canvas-2d');
             const container = document.getElementById('canvas-container');
             const containerW = container.clientWidth || 400;
             const containerH = container.clientHeight || 300;
             
-            // Calculate scale to fit board in view with padding
+            
             const padding = 40;
             const availW = containerW - padding * 2;
             const availH = containerH - padding * 2;
-            const scale = Math.min(availW / bW, availH / bH, 8); // Max scale 8
+            const scale = Math.min(availW / bW, availH / bH, 8);
             
             const drawW = bW * scale;
             const drawH = bH * scale;
@@ -790,25 +789,25 @@
             
             const r = (D / 2) * scale;
             const hPitch = (D + P) * scale;
-            const vPitch = hPitch * Math.sqrt(3) / 2; // Proper hexagonal packing
+            const vPitch = hPitch * Math.sqrt(3) / 2;
             
-            // Update viewBox
+            
             svg.setAttribute('viewBox', `0 0 ${containerW} ${containerH}`);
             
-            // Clean
+            
             let content = `<rect width="100%" height="100%" fill="white" />`; 
-            // Frame (same stroke width as holes)
+            
             content += `<rect x="${offsetX}" y="${offsetY}" width="${drawW}" height="${drawH}" fill="none" stroke="#444" stroke-width="0.5"/>`;
             
-            // Calculate how many rows and cols fit
+            
             const maxCols = Math.floor((drawW - 2 * r) / hPitch) + 1;
             const maxRows = Math.floor((drawH - 2 * r) / vPitch) + 1;
             
-            // Calculate total pattern size to center it
+            
             const patternW = (maxCols - 1) * hPitch + (maxRows > 1 ? hPitch / 2 : 0);
             const patternH = (maxRows - 1) * vPitch;
             
-            // Center offset
+            
             const centerOffsetX = (drawW - patternW) / 2 - hPitch / 4;
             const centerOffsetY = (drawH - patternH) / 2;
             
@@ -821,7 +820,7 @@
                     const cx = offsetX + centerOffsetX + r + col * hPitch + rowOffset;
                     const cy = offsetY + centerOffsetY + r + row * vPitch;
                     
-                    // Check if hole fits completely inside
+                    
                     if(cx - r >= offsetX && cx + r <= offsetX + drawW && 
                        cy - r >= offsetY && cy + r <= offsetY + drawH) {
                         dots += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#444" stroke-width="0.5" />`;
@@ -849,11 +848,11 @@
             setTimeout(() => n.classList.remove('show'), 3000);
         }
 
-        // 7. 3D Logic (Manual Control Restored)
+        
         let scene, camera, renderer, mesh;
         let isDragging = false, isPanning = false;
         let mouseX = 0, mouseY = 0;
-        let rotX = -0.5, rotY = 0; // Initial rotation
+        let rotX = -0.5, rotY = 0;
         let panX = 0, panY = 0;
         let camDist = 150;
 
@@ -873,7 +872,7 @@
             const l2 = new THREE.DirectionalLight(0xffffff, 0.5); l2.position.set(-20, -50, 20); scene.add(l2);
             scene.add(new THREE.AmbientLight(0x606060));
 
-            // Mouse Events
+            
             canvas3d.addEventListener('mousedown', e => {
                 isDragging = true; isPanning = e.shiftKey;
                 mouseX = e.clientX; mouseY = e.clientY;
@@ -920,14 +919,14 @@
             shape.closePath();
             
             const hPitch = Math.max(0.1, D + P); 
-            const vPitch = hPitch * Math.sqrt(3) / 2; // Proper hexagonal packing
+            const vPitch = hPitch * Math.sqrt(3) / 2;
             const r = D / 2;
 
-            // 板の境界（穴が完全に収まる範囲）
+            
             const halfW = bW / 2 - r;
             const halfH = bH / 2 - r;
 
-            // 中心から両方向に穴を配置
+            
             const maxJ = Math.floor(halfH / vPitch);
             const maxI = Math.floor((halfW + hPitch / 2) / hPitch);
 
@@ -937,7 +936,7 @@
                     const cx = i * hPitch + offset;
                     const cy = j * vPitch;
                     
-                    // 穴が板の境界内に完全に収まるかチェック
+                    
                     if(Math.abs(cx) + r <= bW / 2 && Math.abs(cy) + r <= bH / 2) {
                         const h = new THREE.Path();
                         h.absarc(cx, cy, r, 0, Math.PI * 2);
@@ -951,7 +950,7 @@
             mesh = new THREE.Mesh(g, m);
             scene.add(mesh);
             
-            // Adjust camera distance based on board size
+            
             camDist = Math.max(bW, bH) * 2;
             updateCamera();
         }
@@ -961,10 +960,10 @@
             renderer.render(scene, camera);
         }
 
-        // Init
+        
         updatePreview();
         
-        // Handle window resize
+        
         window.addEventListener('resize', () => {
             updatePreview();
             if(scene && renderer) {
